@@ -1,4 +1,1 @@
-import { expect,it } from 'vitest';
-import { analyzeOpportunity } from '../src/domain/analyzer';
-import { generateInterviewQuestions } from '../src/domain/interview';
-it('generates JD-specific Playwright and AI questions',()=>{const job={title:'QA Architect',company:'X',url:'x',description:'Worldwide remote international contractors accepted. Playwright TypeScript AI API CI/CD.'};const qs=generateInterviewQuestions(job,analyzeOpportunity(job));expect(qs.some(q=>q.question.includes('Playwright'))).toBe(true);expect(qs.some(q=>q.category==='AI in QA')).toBe(true)});
+import{describe,it,expect}from'vitest';import{generateInterviewQuestions}from'../src/domain/interview';describe('interview prep',()=>{it('generates JD-specific Playwright, API and AI questions',()=>{const q=generateInterviewQuestions({title:'Automation Architect',company:'A',url:'x',description:'B2B worldwide remote Playwright TypeScript API AI automation architecture'});expect(q.some(x=>x.question.includes('Playwright'))).toBe(true);expect(q.some(x=>x.question.includes('API'))).toBe(true);expect(q.some(x=>x.question.includes('AI'))).toBe(true);expect(q.every(x=>x.why.length>0)).toBe(true)})});

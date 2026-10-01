@@ -1,18 +1,4 @@
-import type { ApplicationStatus, OpportunityInput } from '@/domain/types';
-import { analyzeOpportunity } from '@/domain/analyzer';
-import { opportunityKey } from '@/domain/dedupe';
-import { isVisibleInDiscovery, markApplied } from '@/domain/lifecycle';
-
-type Stored = OpportunityInput & ReturnType<typeof analyzeOpportunity> & { id: string; status: ApplicationStatus; dedupeKey: string; discoveredAt: string };
-const seed: OpportunityInput[] = [
- { title:'Test Automation Architect', company:'Example Global', url:'https://example.invalid/jobs/1', location:'Worldwide Remote', description:'B2B international contractors accepted. Lead Playwright with TypeScript automation architecture, API testing, CI/CD, Docker and AWS.', compensation:'$70/hour', source:'demo' },
- { title:'Principal SDET', company:'Example US', url:'https://example.invalid/jobs/2', location:'Remote', description:'Full-time remote role. Playwright, TypeScript, Selenium and API automation. Applicants must reside in the United States and US work authorization required.', compensation:'$150,000', source:'demo' }
-];
-let rows: Stored[] = seed.map((j,i) => ({...j,...analyzeOpportunity(j), id:`demo-${i+1}`, status:'NEW', dedupeKey:opportunityKey(j), discoveredAt:new Date().toISOString()}));
-export const store = {
- all: () => rows,
- discovery: () => rows.filter(r => isVisibleInDiscovery(r.status) && r.indiaEligibility !== 'NOT_ELIGIBLE'),
- add: (j: OpportunityInput) => { const key=opportunityKey(j); const existing=rows.find(r=>r.dedupeKey===key); if(existing) return existing; const r={...j,...analyzeOpportunity(j),id:crypto.randomUUID(),status:'NEW' as const,dedupeKey:key,discoveredAt:new Date().toISOString()}; rows.push(r); return r; },
- apply: (id:string) => { const r=rows.find(x=>x.id===id); if(!r) throw new Error('Opportunity not found'); r.status=markApplied(r.status); return r; },
- setStatus: (id:string,status:ApplicationStatus) => { const r=rows.find(x=>x.id===id); if(!r) throw new Error('Opportunity not found'); r.status=status; return r; }
-};
+import type {ApplicationStatus,OpportunityInput} from '@/domain/types';import {analyzeOpportunity} from '@/domain/analyzer';import {opportunityKey} from '@/domain/dedupe';import {isVisibleInDiscovery,markApplied} from '@/domain/lifecycle';
+type Stored=OpportunityInput&ReturnType<typeof analyzeOpportunity>&{id:string;status:ApplicationStatus;dedupeKey:string;discoveredAt:string};
+let rows:Stored[]=[];type Event={id:string;opportunityId:string;type:string;detail:string;evidence?:string;occurredAt:string};let events:Event[]=[];
+export const store={all:()=>rows,discovery:()=>rows.filter(r=>isVisibleInDiscovery(r.status)&&r.indiaEligibility!=='NOT_ELIGIBLE'),applications:()=>rows.filter(r=>!isVisibleInDiscovery(r.status)&&r.status!=='IGNORED'),get:(id:string)=>rows.find(r=>r.id===id),add:(j:OpportunityInput)=>{const key=opportunityKey(j),existing=rows.find(r=>r.dedupeKey===key);if(existing)return existing;const r={...j,...analyzeOpportunity(j),id:crypto.randomUUID(),status:'NEW' as const,dedupeKey:key,discoveredAt:new Date().toISOString()};rows.push(r);return r},addMany:(jobs:OpportunityInput[])=>jobs.map(j=>store.add(j)),apply:(id:string)=>{const r=rows.find(x=>x.id===id);if(!r)throw new Error('Opportunity not found');r.status=markApplied(r.status);events.push({id:crypto.randomUUID(),opportunityId:id,type:'APPLIED',detail:'Marked as applied',occurredAt:new Date().toISOString()});return r},setStatus:(id:string,status:ApplicationStatus,evidence?:string)=>{const r=rows.find(x=>x.id===id);if(!r)throw new Error('Opportunity not found');r.status=status;events.push({id:crypto.randomUUID(),opportunityId:id,type:status,detail:`Application moved to ${status}`,evidence,occurredAt:new Date().toISOString()});return r},events:(id:string)=>events.filter(e=>e.opportunityId===id),reset:()=>{rows=[];events=[]}};

@@ -1,37 +1,58 @@
 # Personal AI Job Search Assistant
 
-Private, single-user job and B2B opportunity assistant tailored to two resume profiles: full-time and contract/B2B.
+Private, single-user job-search assistant built specifically around Surendra's two resumes: a full-time QA leadership profile and a contract/Toptal B2B profile.
 
-## Implemented in v0.1
-- Two candidate profiles (full-time + contract)
+## Implemented
+
+- Two candidate profiles and automatic resume-profile selection
+- Dynamic full-time and B2B search plans
+- Search-based company/job discovery through a pluggable provider (Serper implementation)
+- Greenhouse, Lever and Ashby public job-feed connectors
+- Generic public job-page extraction
 - Permanent/contract/B2B classification
-- Worldwide/India eligibility rules with US-only deal-breaker handling
-- Resume-profile selection
-- Technical/responsibility matching
-- Shortlist-likelihood estimate with confidence
-- Opportunity deduplication
-- Application lifecycle: applied opportunities disappear from discovery
-- Private dashboard + API routes
-- Prisma data model for opportunities, applications and timeline events
-- Unit tests for eligibility, profile selection, scoring, dedupe and lifecycle
+- Worldwide/India eligibility and hard deal-breaker detection
+- Resume/JD technical, responsibility, seniority and evidence matching
+- Explainable shortlist-likelihood estimate
+- Cross-source deduplication
+- New/shortlisted/applied/interview/offer/rejected lifecycle
+- Applied jobs removed from discovery and protected from rediscovery
+- Gmail application-mail reader + application/status classification
+- Action-required signals for interview scheduling and assessments
+- Job-specific interview questions, answer structure and follow-ups
+- Private responsive dashboard, applications tracker and interview-prep view
+- Prisma schema for durable SQLite persistence (domain prototype currently uses the in-process repository; schema is ready for DB repository wiring)
+- Unit tests for eligibility, matching, dedupe, lifecycle, email classification, search planning and interview generation
 
-## Run
-1. `cp .env.example .env`
-2. `npm install`
-3. `npm test`
-4. `npm run dev`
-5. Open `http://localhost:3000`
+## Setup
 
-The first dashboard uses two demo opportunities so behavior is visible immediately. Live search/ATS connectors are the next vertical slice.
+```bash
+cp .env.example .env
+npm install
+npm test
+npm run dev
+```
 
-## Design rule
-A role labelled `Remote` is never assumed to be worldwide. Explicit geography/work-authorization restrictions override technical match.
+Open http://localhost:3000.
 
-## Next modules
-- Search provider adapter
-- Greenhouse / Lever / Ashby connectors
-- Generic career page + Playwright connector
-- Scheduled discovery worker
-- Persistent Prisma repository replacing in-memory demo store
-- Gmail application-status correlation
-- Job-specific interview question generator
+### Live discovery
+
+Set `SERPER_API_KEY`, start the app and click **Run discovery now**. Search providers are adapters, so Bing/Google Custom Search or another provider can be added without changing matching logic.
+
+### Gmail tracking
+
+The prototype accepts a Gmail OAuth access token via `GMAIL_ACCESS_TOKEN`. For a long-running deployment, replace this with the normal Google OAuth authorization-code + refresh-token flow; never commit tokens.
+
+## Commands
+
+- `npm run dev` — local portal
+- `npm test` — unit tests
+- `npm run typecheck` — TypeScript validation
+- `npm run build` — production build
+- `npm run db:generate` — generate Prisma client
+- `npm run db:push` — create/update local SQLite schema
+
+## Important behavior
+
+A high technical match does not override geographic ineligibility. An explicit US-only/work-authorization restriction caps the result and marks it not eligible. "Remote" by itself is never treated as "worldwide".
+
+Shortlist likelihood is an explainable heuristic, not an employer probability. It is designed to be calibrated later from actual application outcomes.

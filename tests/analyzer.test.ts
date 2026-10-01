@@ -1,17 +1,3 @@
-import { describe,it,expect } from 'vitest';
-import { analyzeOpportunity, classifyEmployment, evaluateIndiaEligibility } from '../src/domain/analyzer';
-
-describe('employment classification',()=>{
- it('detects B2B',()=>expect(classifyEmployment({title:'QA Architect',company:'X',url:'x',description:'Worldwide remote B2B international contractor'})).toBe('B2B'));
- it('detects permanent',()=>expect(classifyEmployment({title:'SDET',company:'X',url:'x',description:'Full-time permanent role'})).toBe('PERMANENT'));
-});
-
-describe('India eligibility',()=>{
- it('rejects misleading US-only remote roles',()=>{const r=evaluateIndiaEligibility({title:'SDET',company:'X',url:'x',location:'Remote',description:'Applicants must reside in the United States. US work authorization required.'});expect(r.eligibility).toBe('NOT_ELIGIBLE')});
- it('confirms worldwide international contract',()=>{const r=evaluateIndiaEligibility({title:'Architect',company:'X',url:'x',location:'Worldwide Remote',description:'International contractors accepted.'});expect(r.eligibility).toBe('CONFIRMED');expect(r.worldwide).toBe(true)});
-});
-
-describe('profile selection and scoring',()=>{
- it('uses contract resume for B2B Playwright/AI role',()=>{const r=analyzeOpportunity({title:'Test Automation Architect',company:'X',url:'x',location:'Worldwide Remote',description:'B2B international contractors accepted. Playwright TypeScript AI-assisted test automation API testing CI/CD Docker AWS automation framework design.'});expect(r.selectedProfile).toBe('CONTRACT');expect(r.indiaEligibility).toBe('CONFIRMED');expect(r.overallMatch).toBeGreaterThan(60)});
- it('caps an ineligible role despite technical match',()=>{const r=analyzeOpportunity({title:'Principal SDET',company:'X',url:'x',location:'Remote',description:'Full-time Playwright TypeScript Selenium API CI/CD. Must reside in the United States. US work authorization required.'});expect(r.indiaEligibility).toBe('NOT_ELIGIBLE');expect(r.overallMatch).toBeLessThanOrEqual(49);expect(r.shortlistLikelihood).toBe('VERY_LOW')});
-});
+import{describe,it,expect}from'vitest';import{analyzeOpportunity,classifyEmployment,evaluateIndiaEligibility}from'../src/domain/analyzer';
+const base={title:'Test Automation Architect',company:'Acme',url:'https://acme.test/job',description:'Playwright TypeScript API automation CI/CD Docker AWS framework architecture automation strategy lead'};
+describe('opportunity analyzer',()=>{it('selects contract CV for B2B',()=>{const a=analyzeOpportunity({...base,description:`B2B international contractors accepted worldwide remote ${base.description}`});expect(a.selectedProfile).toBe('CONTRACT');expect(a.indiaEligibility).toBe('CONFIRMED');expect(a.overallMatch).toBeGreaterThan(70)});it('blocks US-only even with strong tech match',()=>{const a=analyzeOpportunity({...base,description:`Full-time remote. US work authorization required. ${base.description}`});expect(a.indiaEligibility).toBe('NOT_ELIGIBLE');expect(a.overallMatch).toBeLessThan(50);expect(a.shortlistLikelihood).toBe('VERY_LOW')});it('classifies permanent',()=>expect(classifyEmployment({...base,description:'Full-time permanent role'})).toBe('PERMANENT'));it('marks global remote likely',()=>expect(evaluateIndiaEligibility({...base,location:'Global Remote',description:'Remote across APAC and global teams'}).eligibility).toBe('LIKELY'))});

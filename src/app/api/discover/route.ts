@@ -1,0 +1,2 @@
+import {NextResponse} from 'next/server';import {SerperSearchProvider} from '@/services/discovery/web-search';import {discoverFromSearch} from '@/services/discovery/engine';import {store} from '@/lib/store';
+export async function POST(){try{const jobs=await discoverFromSearch(new SerperSearchProvider());const before=store.all().length;store.addMany(jobs);return NextResponse.json({discovered:jobs.length,added:store.all().length-before,total:store.all().length})}catch(e){return NextResponse.json({error:e instanceof Error?e.message:'Discovery failed'},{status:500})}}

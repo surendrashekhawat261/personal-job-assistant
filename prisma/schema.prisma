@@ -1,51 +1,111 @@
-generator client { provider = "prisma-client-js" }
-datasource db { provider = "sqlite"; url = env("DATABASE_URL") }
+generator client {
+  provider = "prisma-client-js"
+}
 
-enum ProfileKind { FULL_TIME CONTRACT }
-enum ApplicationStatus { NEW REVIEWED SHORTLISTED APPLIED SCREENING INTERVIEW TECHNICAL FINAL OFFER HIRED REJECTED WITHDRAWN CLOSED NO_RESPONSE IGNORED }
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum ProfileKind {
+  FULL_TIME
+  CONTRACT
+}
+
+enum ApplicationStatus {
+  NEW
+  REVIEWED
+  SHORTLISTED
+  APPLIED
+  SCREENING
+  INTERVIEW
+  ASSESSMENT
+  TECHNICAL
+  FINAL
+  OFFER
+  HIRED
+  REJECTED
+  WITHDRAWN
+  CLOSED
+  NO_RESPONSE
+  IGNORED
+}
 
 model Opportunity {
-  id              String   @id @default(cuid())
-  externalId      String?
-  dedupeKey       String   @unique
-  title           String
-  company         String
-  url             String
-  location        String?
-  description     String
-  compensation    String?
-  source          String?
-  employmentType  String
-  profileKind     ProfileKind
-  indiaEligibility String
-  worldwideRemote Boolean  @default(false)
-  overallMatch    Int
-  shortlistLikelihood String
-  shortlistConfidence String
-  status          ApplicationStatus @default(NEW)
-  firstDiscovered DateTime @default(now())
-  lastVerified    DateTime @updatedAt
-  application     Application?
+  id                    String            @id @default(cuid())
+  externalId            String?
+  dedupeKey             String            @unique
+  title                 String
+  company               String
+  url                   String
+  location              String?
+  description           String
+  compensation          String?
+  source                String?
+  postedAt              DateTime?
+  employmentType        String
+  profileKind           ProfileKind
+  indiaEligibility      String
+  worldwideRemote       Boolean           @default(false)
+  technicalMatch        Int               @default(0)
+  responsibilityMatch   Int               @default(0)
+  seniorityMatch        Int               @default(0)
+  resumeEvidence        Int               @default(0)
+  overallMatch          Int
+  shortlistLikelihood   String
+  shortlistConfidence   String
+  matchedSkills         String            @default("[]")
+  missingSignals        String            @default("[]")
+  reasons               String            @default("[]")
+  dealBreakers          String            @default("[]")
+  status                ApplicationStatus @default(NEW)
+  firstDiscovered       DateTime          @default(now())
+  lastVerified          DateTime          @updatedAt
+  application           Application?
 }
 
 model Application {
-  id             String   @id @default(cuid())
-  opportunityId  String   @unique
-  opportunity    Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
-  appliedAt      DateTime @default(now())
-  resumeProfile  ProfileKind
+  id                  String             @id @default(cuid())
+  opportunityId       String             @unique
+  opportunity         Opportunity        @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  appliedAt           DateTime           @default(now())
+  resumeProfile       ProfileKind
   submittedResumePath String?
-  recruiter      String?
-  notes          String?
-  events         ApplicationEvent[]
+  recruiter           String?
+  notes               String?
+  events              ApplicationEvent[]
+  emails              ApplicationEmail[]
 }
 
 model ApplicationEvent {
-  id            String @id @default(cuid())
+  id            String      @id @default(cuid())
   applicationId String
   application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   type          String
   detail        String
   evidence      String?
-  occurredAt    DateTime @default(now())
+  occurredAt    DateTime    @default(now())
+}
+
+model ApplicationEmail {
+  id             String      @id
+  applicationId  String
+  application    Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  threadId       String?
+  sender         String
+  subject        String
+  receivedAt     DateTime
+  classification String
+  confidence     String
+  actionRequired String?
+}
+
+model DiscoveryRun {
+  id         String   @id @default(cuid())
+  startedAt  DateTime @default(now())
+  finishedAt DateTime?
+  queries    Int      @default(0)
+  discovered Int      @default(0)
+  added      Int      @default(0)
+  errors     String   @default("[]")
 }

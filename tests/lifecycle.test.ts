@@ -1,6 +1,1 @@
-import { describe,it,expect } from 'vitest';
-import { isVisibleInDiscovery,markApplied } from '../src/domain/lifecycle';
-describe('application lifecycle',()=>{
- it('removes applied jobs from discovery',()=>{expect(isVisibleInDiscovery('NEW')).toBe(true);expect(isVisibleInDiscovery(markApplied('SHORTLISTED'))).toBe(false)});
- it('does not reapply terminal jobs',()=>expect(()=>markApplied('REJECTED')).toThrow());
-});
+import{describe,it,expect,beforeEach}from'vitest';import{isVisibleInDiscovery}from'../src/domain/lifecycle';import{store}from'../src/lib/store';describe('application lifecycle',()=>{beforeEach(()=>store.reset());it('removes applied job from discovery',()=>{const x=store.add({title:'QA Architect',company:'A',url:'https://a.test/job',description:'worldwide remote playwright typescript'});expect(store.discovery()).toHaveLength(1);store.apply(x.id);expect(store.discovery()).toHaveLength(0);expect(store.applications()).toHaveLength(1)});it('does not re-add same applied job',()=>{const j={title:'QA Architect',company:'A',url:'https://a.test/job',description:'worldwide remote playwright'};const x=store.add(j);store.apply(x.id);store.add(j);expect(store.all()).toHaveLength(1)});it('status visibility is strict',()=>{expect(isVisibleInDiscovery('SHORTLISTED')).toBe(true);expect(isVisibleInDiscovery('APPLIED')).toBe(false)})});

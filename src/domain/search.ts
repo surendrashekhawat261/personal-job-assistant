@@ -1,7 +1,3 @@
-import type { CandidateProfile } from './types';
-export function buildSearchQueries(p:CandidateProfile){
- const core=['Playwright TypeScript','QA automation','SDET'];
- const titles=p.targetTitles.slice(0,6);
- const remote=['worldwide remote','international contractor','remote India'];
- return [...new Set(titles.flatMap(t=>remote.map(r=>`"${t}" ${r}`)).concat(core.map(c=>`"${c}" worldwide remote`)))];
-}
+import {profiles} from './profiles';
+export function buildSearchQueries(kind:'FULL_TIME'|'CONTRACT'){const p=profiles[kind],titles=p.targetTitles.slice(0,8),core=['Playwright TypeScript','SDET automation','quality engineering'];const suffix=kind==='CONTRACT'?['B2B remote','international contractor','worldwide contract','C2C remote']:['worldwide remote','global remote','remote India'];return [...new Set(titles.flatMap(t=>suffix.slice(0,2).map(s=>`"${t}" ${s}`)).concat(core.flatMap(c=>suffix.slice(0,2).map(s=>`${c} ${s}`))))].slice(0,24)}
+export function allSearchQueries(){return{FULL_TIME:buildSearchQueries('FULL_TIME'),CONTRACT:buildSearchQueries('CONTRACT')}}
