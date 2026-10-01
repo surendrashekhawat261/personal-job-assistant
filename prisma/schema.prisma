@@ -1,0 +1,51 @@
+generator client { provider = "prisma-client-js" }
+datasource db { provider = "sqlite"; url = env("DATABASE_URL") }
+
+enum ProfileKind { FULL_TIME CONTRACT }
+enum ApplicationStatus { NEW REVIEWED SHORTLISTED APPLIED SCREENING INTERVIEW TECHNICAL FINAL OFFER HIRED REJECTED WITHDRAWN CLOSED NO_RESPONSE IGNORED }
+
+model Opportunity {
+  id              String   @id @default(cuid())
+  externalId      String?
+  dedupeKey       String   @unique
+  title           String
+  company         String
+  url             String
+  location        String?
+  description     String
+  compensation    String?
+  source          String?
+  employmentType  String
+  profileKind     ProfileKind
+  indiaEligibility String
+  worldwideRemote Boolean  @default(false)
+  overallMatch    Int
+  shortlistLikelihood String
+  shortlistConfidence String
+  status          ApplicationStatus @default(NEW)
+  firstDiscovered DateTime @default(now())
+  lastVerified    DateTime @updatedAt
+  application     Application?
+}
+
+model Application {
+  id             String   @id @default(cuid())
+  opportunityId  String   @unique
+  opportunity    Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  appliedAt      DateTime @default(now())
+  resumeProfile  ProfileKind
+  submittedResumePath String?
+  recruiter      String?
+  notes          String?
+  events         ApplicationEvent[]
+}
+
+model ApplicationEvent {
+  id            String @id @default(cuid())
+  applicationId String
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  type          String
+  detail        String
+  evidence      String?
+  occurredAt    DateTime @default(now())
+}
