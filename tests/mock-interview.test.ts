@@ -1,0 +1,1 @@
+import{describe,it,expect}from'vitest';import{evaluateMockAnswer}from'@/domain/mock-interview';describe('mock interview',()=>{it('flags very short answers',()=>{expect(evaluateMockAnswer('q','short answer').readiness).toBe('TOO_BRIEF')})})

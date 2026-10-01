@@ -1,0 +1,1 @@
+import {NextResponse} from 'next/server';import {store} from '@/lib/store';import {calibrationSummary} from '@/domain/calibration';export async function GET(){return NextResponse.json({stats:store.stats(),calibration:calibrationSummary(store.all())})}

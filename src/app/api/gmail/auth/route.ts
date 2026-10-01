@@ -1,0 +1,1 @@
+import {NextResponse} from 'next/server';import {gmailAuthUrl} from '@/services/email/oauth';export async function GET(){try{return NextResponse.redirect(gmailAuthUrl())}catch(e){return NextResponse.json({error:String(e)},{status:500})}}

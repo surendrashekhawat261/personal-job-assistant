@@ -1,0 +1,1 @@
+import{describe,it,expect}from'vitest';import{calibrationSummary}from'@/domain/calibration';describe('calibration',()=>{it('requires enough real outcomes before judging model',()=>{expect(calibrationSummary([{shortlistLikelihood:'HIGH',status:'INTERVIEW'}]).calibration).toBe('INSUFFICIENT_DATA')})})
