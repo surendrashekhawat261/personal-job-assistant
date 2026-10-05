@@ -1,5 +1,5 @@
 import fs from 'node:fs';import path from 'node:path';
-import type {ApplicationStatus,MailMessage,OpportunityInput} from '@/domain/types';import {analyzeOpportunity} from '@/domain/analyzer';import {opportunityKey} from '@/domain/dedupe';import {isVisibleInDiscovery,markApplied} from '@/domain/lifecycle';
+import type {ApplicationStatus,MailMessage,OpportunityInput} from '@/domain/types';import {analyzeOpportunity} from '@/domain/analyzer';import {opportunityKey} from '@/domain/dedupe';import {isVisibleInDiscovery,markApplied} from '@/domain/lifecycle';import {discoveryTrack} from '@/domain/track';
 type Stored=OpportunityInput&ReturnType<typeof analyzeOpportunity>&{id:string;status:ApplicationStatus;dedupeKey:string;discoveredAt:string;lastVerified:string};
 type Event={id:string;opportunityId:string;type:string;detail:string;evidence?:string;occurredAt:string};
 type MailRecord={id:string;opportunityId:string;threadId?:string;from:string;subject:string;receivedAt:string;classification:string;confidence:string;actionRequired?:string};
@@ -10,7 +10,7 @@ function save(){if(process.env.NODE_ENV==='test')return;fs.mkdirSync(path.dirnam
 function rows(){load();return memory.rows}function events(){load();return memory.events}function mails(){load();return memory.mails}
 export const store={
  all:()=>rows(),discovery:()=>rows().filter(r=>isVisibleInDiscovery(r.status)&&r.indiaEligibility!=='NOT_ELIGIBLE'),applications:()=>rows().filter(r=>!isVisibleInDiscovery(r.status)&&r.status!=='IGNORED'),get:(id:string)=>rows().find(r=>r.id===id),
- add:(j:OpportunityInput)=>{const key=opportunityKey(j),existing=rows().find(r=>r.dedupeKey===key);if(existing){existing.lastVerified=new Date().toISOString();save();return existing}const now=new Date().toISOString(),r={...j,...analyzeOpportunity(j),id:crypto.randomUUID(),status:'NEW' as const,dedupeKey:key,discoveredAt:now,lastVerified:now};rows().push(r);save();return r},
+ add:(j:OpportunityInput)=>{const key=opportunityKey(j),existing=rows().find(r=>r.dedupeKey===key);if(existing){existing.lastVerified=new Date().toISOString();save();return existing}const analysis=analyzeOpportunity(j);const now=new Date().toISOString(),r={...j,...analysis,discoveryTrack:j.discoveryTrack??discoveryTrack(j,analysis.employmentType),id:crypto.randomUUID(),status:'NEW' as const,dedupeKey:key,discoveredAt:now,lastVerified:now};rows().push(r);save();return r},
  addMany:(jobs:OpportunityInput[])=>jobs.map(j=>store.add(j)),
  apply:(id:string)=>{const r=rows().find(x=>x.id===id);if(!r)throw new Error('Opportunity not found');r.status=markApplied(r.status);events().push({id:crypto.randomUUID(),opportunityId:id,type:'APPLIED',detail:'Marked as applied',occurredAt:new Date().toISOString()});save();return r},
  setStatus:(id:string,status:ApplicationStatus,evidence?:string)=>{const r=rows().find(x=>x.id===id);if(!r)throw new Error('Opportunity not found');r.status=status;events().push({id:crypto.randomUUID(),opportunityId:id,type:status,detail:`Application moved to ${status}`,evidence,occurredAt:new Date().toISOString()});save();return r},
